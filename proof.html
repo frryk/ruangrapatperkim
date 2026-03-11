@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Form Bukti Rapat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* kompatibilitas dengan js lama */
+    .d-none{display:none;}
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <!-- NAVBAR -->
+  <nav class="bg-gray-900 text-white">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+      <img src="img/batam-logo.png" alt="Batam" class="h-10">
+      <div class="leading-tight">
+        <strong class="block">Dinas Perumahan, Kawasan Permukiman dan Pertamanan Kota Batam</strong>
+        <small class="opacity-80">Form Bukti Kegiatan Rapat</small>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 py-6">
+    <!-- CARD DETAIL -->
+    <div id="rapatCard" class="hidden bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h5 class="m-0 font-semibold text-gray-900">Detail Kegiatan</h5>
+      </div>
+      <div class="px-5 py-4">
+        <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-2">
+          <div class="sm:grid sm:grid-cols-3 sm:gap-2">
+            <dt class="font-medium text-gray-600">Tanggal</dt>
+            <dd id="fTanggal" class="sm:col-span-2">-</dd>
+          </div>
+          <div class="sm:grid sm:grid-cols-3 sm:gap-2">
+            <dt class="font-medium text-gray-600">Jam</dt>
+            <dd id="fJam" class="sm:col-span-2">-</dd>
+          </div>
+          <div class="sm:grid sm:grid-cols-3 sm:gap-2">
+            <dt class="font-medium text-gray-600">Ruang</dt>
+            <dd id="fRuang" class="sm:col-span-2">-</dd>
+          </div>
+          <div class="sm:grid sm:grid-cols-3 sm:gap-2">
+            <dt class="font-medium text-gray-600">Judul</dt>
+            <dd id="fJudul" class="sm:col-span-2">-</dd>
+          </div>
+          <div class="sm:grid sm:grid-cols-3 sm:gap-2">
+            <dt class="font-medium text-gray-600">Bidang</dt>
+            <dd id="fBidang" class="sm:col-span-2">-</dd>
+          </div>
+        </dl>
+      </div>
+      <div class="px-5 py-4 border-t border-gray-100 text-right">
+        <a id="btnForm" href="#" target="_blank"
+           class="inline-flex items-center justify-center rounded-lg bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700 transition">
+          Isi Form Bukti
+        </a>
+      </div>
+    </div>
+
+    <!-- ALERT -->
+    <div id="alertBox"
+         class="mt-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3">
+      Memuat data rapat...
+    </div>
+  </main>
+
+  <script type="module">
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { db } from "./js/firebase-config.js";
+    import { formatJam } from "./js/utils.js";
+
+    const token = new URLSearchParams(location.search).get("token");
+
+    async function loadData() {
+      const alertEl = document.getElementById("alertBox");
+      if(!token){
+        alertEl.textContent = "Token tidak ditemukan.";
+        return;
+      }
+      try {
+        const snap = await getDoc(doc(db,"bookings", token));
+        if(!snap.exists()){
+          alertEl.textContent = "Data rapat tidak ditemukan.";
+          return;
+        }
+        const data = snap.data();
+
+        const tanggal = data.tanggal;
+        const jam = formatJam(data.jamMulai, data.jamSelesai);
+        const ruang = data.ruang;
+        const judul = data.judul;
+        const bidang = data.bidang;
+
+        document.getElementById("fTanggal").textContent = tanggal;
+        document.getElementById("fJam").textContent = jam;
+        document.getElementById("fRuang").textContent = ruang;
+        document.getElementById("fJudul").textContent = judul;
+        document.getElementById("fBidang").textContent = bidang;
+
+        const formBase = "https://docs.google.com/forms/d/e/1FAIpQLSfIklW556QiQHr_XwzmstqIUZ8xPuHz14gMe-GnHVmNs1e2YQ/viewform";
+        const params = new URLSearchParams({
+          "entry.917755662": judul,
+          "entry.1362130378": tanggal,
+          "entry.266639831": jam,
+          "entry.4444444444": ruang,
+          "entry.1588352965": bidang
+        });
+        document.getElementById("btnForm").href = formBase + "?" + params.toString();
+
+        alertEl.classList.add("d-none");
+        const card = document.getElementById("rapatCard");
+        card.classList.remove("hidden");
+      } catch(err){
+        console.error(err);
+        alertEl.textContent = "Gagal memuat data.";
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

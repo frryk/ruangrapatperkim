@@ -1,0 +1,10 @@
+/* /css/styles.css */
+body { scroll-behavior: smooth; }
+.table td, .table th { vertical-align: middle; }
+
+br {
+  content: "";
+  margin: 2em;
+  display: block;
+  font-size: 24%;
+}
