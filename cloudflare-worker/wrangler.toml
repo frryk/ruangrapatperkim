@@ -1,0 +1,6 @@
+name = "rapattt-telegram-webhook"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Environment variables di-set via Dashboard, bukan di sini (agar token tidak expose ke git)
+# Lihat panduan setup di README-WORKER.md

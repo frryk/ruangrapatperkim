@@ -1,5 +1,5 @@
 // js/app.js (Publik) — Tailwind-ready (UI dinamis sudah diganti ke Tailwind)
-import { collection, addDoc, query, orderBy, onSnapshot, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { collection, addDoc, query, orderBy, onSnapshot, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 import { $, tailwindAlertHTML, toMinutes, isOverlap, isWithinWorkingHours, formatTanggalID, formatJam, paginate } from "./utils.js";
 
@@ -14,6 +14,10 @@ const pager = $("#pagination");
 
 // 👉 SET nomor WA admin (format internasional tanpa “+”)
 const ADMIN_WHATSAPP = "6282385752398"; // ganti nomor admin
+
+// 👉 Konfigurasi Telegram Bot
+const TELEGRAM_BOT_TOKEN = "8474317488:AAHDMpznNa4eFjiNmSEC1oM1oYjQB7GnZq4"; // dari @BotFather
+const TELEGRAM_CHAT_ID = "634857836";    // Chat ID pribadi admin (tanpa minus = personal chat)
 
 // ====== Helpers (UI Tailwind) ======
 
@@ -199,21 +203,6 @@ buildFiltersBar();
 const q = query(collection(db, "bookings"), orderBy("sortKey", "desc"));
 onSnapshot(q, async (snap) => {
   allRows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  // Auto-Approve Check
-  // Jika masih Pending padahal rapatnya adalah untuk besok atau setelahnya, otomatis ubah db
-  for (const row of allRows) {
-    if (row.status === "Pending" && diffDaysFromToday(row.tanggal) >= 1) {
-      try {
-        const { updateDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js");
-        await updateDoc(doc(db, "bookings", row.id), { status: "Approved" });
-        row.status = "Approved"; // Update lokal selagi nunggu trigger onSnapshot berikutnya
-      } catch (e) {
-        console.error("Gagal auto-approve:", e);
-      }
-    }
-  }
-
   refreshFilterOptionsFromData(allRows);
   render();
 });
@@ -264,7 +253,8 @@ bookingForm?.addEventListener("submit", async (e) => {
 
   // simpan
   try {
-    await addDoc(collection(db, "bookings"), {
+    // 1. Simpan booking ke Firestore, dapatkan docRef
+    const docRef = await addDoc(collection(db, "bookings"), {
       ruang, bidang, judul, tanggal, jamMulai, jamSelesai,
       status: "Pending",
       sortKey: buildSortKey(tanggal, jamMulai)
@@ -272,25 +262,43 @@ bookingForm?.addEventListener("submit", async (e) => {
     bookingForm.reset();
     showAlert("success", "Booking tersimpan");
 
-    // Kirim notifikasi email ke Admin via EmailJS
+    // 2. Kirim notifikasi Telegram, simpan message_id ke Firestore
     try {
-      // Data template yang akan digantikan ke {{variabel}} di EmailJS Template
-      const templateParams = {
-        admin_email: "ferrykurniawanpublic@gmail.com", // Ganti dengan email asli admin
-        nama_bidang: bidang,
-        judul_rapat: judul,
-        ruang_rapat: ruang,
-        tanggal_rapat: formatTanggalID(tanggal),
-        jam_rapat: formatJam(jamMulai, jamSelesai)
-      };
+      const pesanTelegram =
+        `🗓 <b>Booking Baru Masuk!</b>\n` +
+        `──────────────────────\n` +
+        `📌 <b>Bidang:</b> ${bidang}\n` +
+        `📝 <b>Judul Rapat:</b> ${judul}\n` +
+        `🏢 <b>Ruang:</b> ${ruang}\n` +
+        `📅 <b>Tanggal:</b> ${formatTanggalID(tanggal)}\n` +
+        `⏰ <b>Jam:</b> ${formatJam(jamMulai, jamSelesai)}\n` +
+        `──────────────────────\n` +
+        `<i>Balas pesan ini untuk menyetujui booking.</i>`;
 
-      // Parameter: service_id, template_id, template_params
-      await emailjs.send('service_ano4foj', 'template_2ldamix', templateParams);
-      console.log("Email notifikasi berhasil dikirim ke Admin!");
-    } catch (emailErr) {
-      console.error("Gagal mengirim email notifikasi EmailJS:", emailErr);
-      // Opsional: munculkan pesan jika email spesifik gagal, tapi data sudah masuk db.
-      // showAlert("warning", "Booking tersimpan, tetapi gagal mengirim email ke Admin.");
+      const res = await fetch(
+        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: pesanTelegram,
+            parse_mode: "HTML"
+          })
+        }
+      );
+      if (res.ok) {
+        const tgData = await res.json();
+        const telegramMsgId = tgData.result.message_id;
+        // 3. Simpan telegramMsgId ke dokumen Firestore agar Worker bisa cocokkan reply
+        await updateDoc(doc(db, "bookings", docRef.id), { telegramMsgId: String(telegramMsgId) });
+        console.log("Notifikasi Telegram terkirim, message_id:", telegramMsgId);
+      } else {
+        const errData = await res.json();
+        console.warn("Telegram API error:", errData);
+      }
+    } catch (telegramErr) {
+      console.error("Gagal mengirim notifikasi Telegram:", telegramErr);
     }
 
   } catch (err) {
