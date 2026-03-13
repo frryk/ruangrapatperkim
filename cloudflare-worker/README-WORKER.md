@@ -41,12 +41,7 @@ Buka **Cloudflare Dashboard** → **Workers & Pages** → pilih `rapattt-telegra
 
 Tambahkan 4 variabel berikut (klik "Add variable", lalu "Encrypt" untuk yang sensitif):
 
-| Variable Name        | Value                                      |
-|----------------------|--------------------------------------------|
-| `TELEGRAM_BOT_TOKEN` | `8474317488:AAHDMpznNa4eFjiNmSEC1oM1oYjQB7GnZq4` |
-| `TELEGRAM_CHAT_ID`   | `634857836`                                |
-| `FIREBASE_API_KEY`   | `AIzaSyBxb0yvohCVn3XI7B9UC1Jtl2yLzNwa9TE` |
-| `FIREBASE_PROJECT_ID`| `rapat-49334`                              |
+|
 
 Klik **Save and Deploy**.
 
