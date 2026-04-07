@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Form Bukti Rapat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* kompatibilitas dengan js lama */
-    .d-none{display:none;}
+    .d-none {
+      display: none;
+    }
   </style>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
   <!-- NAVBAR -->
   <nav class="bg-gray-900 text-white">
@@ -24,8 +28,8 @@
 
   <main class="max-w-4xl mx-auto px-4 py-6">
     <!-- CARD DETAIL -->
-    <div id="rapatCard" class="hidden bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-gray-100">
+    <div id="rapatCard" class="hidden bg-white rounded-xl shadow border border-gray-100 overflow-hidden mb-6">
+      <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
         <h5 class="m-0 font-semibold text-gray-900">Detail Kegiatan</h5>
       </div>
       <div class="px-5 py-4">
@@ -52,37 +56,97 @@
           </div>
         </dl>
       </div>
-      <div class="px-5 py-4 border-t border-gray-100 text-right">
-        <a id="btnForm" href="#" target="_blank"
-           class="inline-flex items-center justify-center rounded-lg bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700 transition">
-          Isi Form Bukti
-        </a>
+    </div>
+
+    <!-- FORM UPLOAD BUKTI -->
+    <div id="uploadCard" class="hidden bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h5 class="m-0 font-semibold text-gray-900">Upload Bukti Rapat</h5>
+      </div>
+      <div class="px-5 py-5 space-y-4">
+        <div id="uploadAlert" class="hidden rounded-lg px-4 py-3 mb-4"></div>
+        <form id="buktiForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Foto Rapat <span class="text-red-500">*</span> <small
+                class="text-gray-500 font-normal">(Isi 2 hingga 5 foto sekaligus. Max 5MB/file)</small></label>
+            <input type="file" id="fotoRapat" accept="image/jpeg,image/png,image/jpg" multiple required
+              class="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Absensi Rapat <span class="text-red-500">*</span> <small
+                class="text-gray-500 font-normal">(Max 5MB. Format: PDF/JPG/PNG)</small></label>
+            <input type="file" id="absensiRapat" accept="application/pdf,image/jpeg,image/png,image/jpg" required
+              class="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <button id="btnSubmit"
+              class="w-full rounded-lg bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700 transition"
+              type="submit">
+              Upload Bukti
+            </button>
+          </div>
+          <div id="progressContainer" class="hidden mt-2">
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <p id="progressText" class="text-xs text-center text-gray-500 mt-1">Mengupload: 0%</p>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW MODE -->
+    <div id="viewCard" class="hidden bg-white rounded-xl shadow border border-green-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-green-100 bg-green-50 text-green-800 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd" />
+        </svg>
+        <h5 class="m-0 font-semibold focus:outline-none">Bukti Rapat Sudah Diupload</h5>
+      </div>
+      <div class="px-5 py-4 space-y-4">
+        <p class="text-sm text-gray-600">Terima kasih, bukti dukung rapat ini sudah berhasil disimpan pada sistem.</p>
       </div>
     </div>
 
     <!-- ALERT -->
-    <div id="alertBox"
-         class="mt-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3">
+    <div id="alertBox" class="mt-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3">
       Memuat data rapat...
     </div>
   </main>
 
   <script type="module">
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { db } from "./js/firebase-config.js";
     import { formatJam } from "./js/utils.js";
 
+    // Konfigurasi Cloudinary Anda - SILAKAN GANTI DENGAN MILIK ANDA
+    const CLOUDINARY_CLOUD_NAME = "dlb3eamrw";
+    const CLOUDINARY_UPLOAD_PRESET = "rapat_bukti";
+
     const token = new URLSearchParams(location.search).get("token");
+    const alertEl = document.getElementById("alertBox");
+    const uploadAlert = document.getElementById("uploadAlert");
+
+    function showAlert(msg, isError = false) {
+      uploadAlert.textContent = msg;
+      uploadAlert.classList.remove("hidden", "bg-red-50", "text-red-800", "border-red-200", "bg-green-50", "text-green-800", "border-green-200");
+      if (isError) {
+        uploadAlert.classList.add("bg-red-50", "text-red-800", "border", "border-red-200");
+      } else {
+        uploadAlert.classList.add("bg-green-50", "text-green-800", "border", "border-green-200");
+      }
+    }
 
     async function loadData() {
-      const alertEl = document.getElementById("alertBox");
-      if(!token){
+      if (!token) {
         alertEl.textContent = "Token tidak ditemukan.";
         return;
       }
       try {
-        const snap = await getDoc(doc(db,"bookings", token));
-        if(!snap.exists()){
+        const snap = await getDoc(doc(db, "bookings", token));
+        if (!snap.exists()) {
           alertEl.textContent = "Data rapat tidak ditemukan.";
           return;
         }
@@ -100,26 +164,138 @@
         document.getElementById("fJudul").textContent = judul;
         document.getElementById("fBidang").textContent = bidang;
 
-        const formBase = "https://docs.google.com/forms/d/e/1FAIpQLSfIklW556QiQHr_XwzmstqIUZ8xPuHz14gMe-GnHVmNs1e2YQ/viewform";
-        const params = new URLSearchParams({
-          "entry.917755662": judul,
-          "entry.1362130378": tanggal,
-          "entry.266639831": jam,
-          "entry.4444444444": ruang,
-          "entry.1588352965": bidang
-        });
-        document.getElementById("btnForm").href = formBase + "?" + params.toString();
+        alertEl.classList.add("hidden");
+        document.getElementById("rapatCard").classList.remove("hidden");
 
-        alertEl.classList.add("d-none");
-        const card = document.getElementById("rapatCard");
-        card.classList.remove("hidden");
-      } catch(err){
+        if (data.buktiFoto || data.buktiAbsen) {
+          document.getElementById("viewCard").classList.remove("hidden");
+        } else {
+          document.getElementById("uploadCard").classList.remove("hidden");
+        }
+      } catch (err) {
         console.error(err);
         alertEl.textContent = "Gagal memuat data.";
       }
     }
 
     loadData();
+
+    // Fungsi helper untuk upload ke Cloudinary API
+    async function uploadToCloudinary(file) {
+      const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      // Anda bisa menambahkan folder spesifik jika mau
+      // formData.append("folder", "ruangrapat_" + token);
+
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error.message || "Gagal upload ke Cloudinary.");
+      }
+
+      const data = await response.json();
+      return data.secure_url;
+    }
+
+    document.getElementById("buktiForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Pengecekan jika variabel cloudinary belum diubah
+      if (CLOUDINARY_CLOUD_NAME === "ganti_dengan_cloud_name_anda" || CLOUDINARY_UPLOAD_PRESET === "ganti_dengan_upload_preset_anda") {
+        showAlert("Silakan konfigurasi API Cloudinary di dalam kode (CLOUDINARY_CLOUD_NAME dan CLOUDINARY_UPLOAD_PRESET) terlebih dahulu.", true);
+        return;
+      }
+
+      const fotoFiles = document.getElementById("fotoRapat").files;
+      const absenFile = document.getElementById("absensiRapat").files[0];
+
+      if(fotoFiles.length < 2 || fotoFiles.length > 5) {
+        showAlert("Silakan pilih antara 2 hingga 5 foto rapat sekaligus.", true);
+        return;
+      }
+      if(!absenFile) {
+        showAlert("Silakan pilih file absensi.", true);
+        return;
+      }
+
+      // Validasi maks 5MB per file
+      const MAX_SIZE = 5242880;
+      for (let i = 0; i < fotoFiles.length; i++) {
+        if (fotoFiles[i].size > MAX_SIZE) {
+          showAlert(`Ukuran foto ke-${i+1} melebihi maksimum 5MB.`, true);
+          return;
+        }
+      }
+      if (absenFile.size > MAX_SIZE) {
+        showAlert("Ukuran Absensi Rapat melebihi maksimum 5MB.", true);
+        return;
+      }
+
+      const btnSubmit = document.getElementById("btnSubmit");
+      const progressContainer = document.getElementById("progressContainer");
+      const progressBar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
+
+      btnSubmit.disabled = true;
+      btnSubmit.classList.add("opacity-50", "cursor-not-allowed");
+      btnSubmit.textContent = "Mengupload...";
+
+      // Tampilkan progress bar buatan (animated)
+      progressContainer.classList.remove("hidden");
+      progressBar.style.transition = "width 2s ease-in-out";
+      progressBar.style.width = "10%";
+      progressText.textContent = "Mempersiapkan server...";
+
+      try {
+        let fotoURLs = [];
+        for (let i = 0; i < fotoFiles.length; i++) {
+          progressBar.style.width = `${10 + (i * 15)}%`;
+          progressText.textContent = `Mengupload Foto Rapat (${i+1}/${fotoFiles.length})...`;
+          const url = await uploadToCloudinary(fotoFiles[i]);
+          fotoURLs.push(url);
+        }
+
+        progressBar.style.width = "80%";
+        progressText.textContent = "Mengupload ke Server (Absensi)...";
+
+        const absenURL = await uploadToCloudinary(absenFile);
+
+        progressBar.style.width = "100%";
+        progressText.textContent = "Menyimpan data...";
+
+        const judulRapat = document.getElementById("fJudul").textContent || "Rapat";
+        const pdfName = `Absensi (${judulRapat}).pdf`;
+
+        await updateDoc(doc(db, "bookings", token), {
+          buktiFotoUrls: fotoURLs, // simpan sebagai array
+          buktiFotoName: fotoFiles[0].name + (fotoFiles.length > 1 ? ` (+${fotoFiles.length - 1} foto lain)` : ''),
+          buktiAbsen: absenURL,
+          buktiAbsenName: pdfName,
+          buktiFoto: fotoURLs[0] // backward compatibility (fallback ke foto pertama)
+        });
+
+        // Tampilkan success UI
+        document.getElementById("uploadCard").classList.add("hidden");
+        document.getElementById("viewCard").classList.remove("hidden");
+
+        alert("Semua Bukti Berhasil Diupload!");
+      } catch (err) {
+        console.error(err);
+        showAlert("Terjadi kesalahan: " + err.message, true);
+        btnSubmit.disabled = false;
+        btnSubmit.classList.remove("opacity-50", "cursor-not-allowed");
+        btnSubmit.textContent = "Upload Bukti";
+        progressContainer.classList.add("hidden");
+      }
+    });
+
   </script>
 </body>
+
 </html>
