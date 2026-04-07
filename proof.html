@@ -67,9 +67,9 @@
         <div id="uploadAlert" class="hidden rounded-lg px-4 py-3 mb-4"></div>
         <form id="buktiForm" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Foto Rapat <span class="text-red-500">*</span> <small
-                class="text-gray-500 font-normal">(Isi 2 hingga 5 foto sekaligus. Max 5MB/file)</small></label>
-            <input type="file" id="fotoRapat" accept="image/jpeg,image/png,image/jpg" multiple required
+            <label class="block text-sm font-medium mb-1">Foto Rapat <small class="text-gray-500 font-normal">(Pilih 2
+                hingga 5 foto. Max 5MB/file)</small></label>
+            <input type="file" id="fotoRapat" accept="image/jpeg,image/png,image/jpg" multiple
               class="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" />
           </div>
           <div>
@@ -215,21 +215,23 @@
       const fotoFiles = document.getElementById("fotoRapat").files;
       const absenFile = document.getElementById("absensiRapat").files[0];
 
-      if(fotoFiles.length < 2 || fotoFiles.length > 5) {
-        showAlert("Silakan pilih antara 2 hingga 5 foto rapat sekaligus.", true);
+      if (fotoFiles.length > 0 && (fotoFiles.length < 2 || fotoFiles.length > 5)) {
+        showAlert("Jika ingin mengupload foto, silakan pilih antara 2 hingga 5 foto rapat.", true);
         return;
       }
-      if(!absenFile) {
+      if (!absenFile) {
         showAlert("Silakan pilih file absensi.", true);
         return;
       }
 
       // Validasi maks 5MB per file
       const MAX_SIZE = 5242880;
-      for (let i = 0; i < fotoFiles.length; i++) {
-        if (fotoFiles[i].size > MAX_SIZE) {
-          showAlert(`Ukuran foto ke-${i+1} melebihi maksimum 5MB.`, true);
-          return;
+      if (fotoFiles.length > 0) {
+        for (let i = 0; i < fotoFiles.length; i++) {
+          if (fotoFiles[i].size > MAX_SIZE) {
+            showAlert(`Ukuran foto ke-${i + 1} melebihi maksimum 5MB.`, true);
+            return;
+          }
         }
       }
       if (absenFile.size > MAX_SIZE) {
@@ -254,11 +256,13 @@
 
       try {
         let fotoURLs = [];
-        for (let i = 0; i < fotoFiles.length; i++) {
-          progressBar.style.width = `${10 + (i * 15)}%`;
-          progressText.textContent = `Mengupload Foto Rapat (${i+1}/${fotoFiles.length})...`;
-          const url = await uploadToCloudinary(fotoFiles[i]);
-          fotoURLs.push(url);
+        if (fotoFiles.length > 0) {
+          for (let i = 0; i < fotoFiles.length; i++) {
+            progressBar.style.width = `${10 + (i * 15)}%`;
+            progressText.textContent = `Mengupload Foto Rapat (${i + 1}/${fotoFiles.length})...`;
+            const url = await uploadToCloudinary(fotoFiles[i]);
+            fotoURLs.push(url);
+          }
         }
 
         progressBar.style.width = "80%";
@@ -272,19 +276,24 @@
         const judulRapat = document.getElementById("fJudul").textContent || "Rapat";
         const pdfName = `Absensi (${judulRapat}).pdf`;
 
-        await updateDoc(doc(db, "bookings", token), {
-          buktiFotoUrls: fotoURLs, // simpan sebagai array
-          buktiFotoName: fotoFiles[0].name + (fotoFiles.length > 1 ? ` (+${fotoFiles.length - 1} foto lain)` : ''),
+        let updateData = {
           buktiAbsen: absenURL,
-          buktiAbsenName: pdfName,
-          buktiFoto: fotoURLs[0] // backward compatibility (fallback ke foto pertama)
-        });
+          buktiAbsenName: pdfName
+        };
+
+        if (fotoURLs.length > 0) {
+          updateData.buktiFotoUrls = fotoURLs;
+          updateData.buktiFotoName = fotoFiles[0].name + (fotoFiles.length > 1 ? ` (+${fotoFiles.length - 1} foto lain)` : '');
+          updateData.buktiFoto = fotoURLs[0]; // backward compatibility
+        }
+
+        await updateDoc(doc(db, "bookings", token), updateData);
 
         // Tampilkan success UI
         document.getElementById("uploadCard").classList.add("hidden");
         document.getElementById("viewCard").classList.remove("hidden");
 
-        alert("Semua Bukti Berhasil Diupload!");
+        alert("Bukti Rapat Berhasil Diupload!");
       } catch (err) {
         console.error(err);
         showAlert("Terjadi kesalahan: " + err.message, true);
