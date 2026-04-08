@@ -4,6 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <!-- OPEN GRAPH / WHATSAPP META TAGS -->
+  <meta property="og:title" content="Upload Bukti Rapat" />
+  <meta property="og:description" content="Silakan upload bukti foto dan absensi kegiatan rapat melalui portal resmi Dinas Perkimtan Kota Batam." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://storage.googleapis.com/rapat-49334.appspot.com/batam-logo.png" />
+  
   <title>Form Bukti Rapat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -61,7 +68,7 @@
     <!-- FORM UPLOAD BUKTI -->
     <div id="uploadCard" class="hidden bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-100">
-        <h5 class="m-0 font-semibold text-gray-900">Upload Bukti Rapat</h5>
+        <h5 id="formTitle" class="m-0 font-semibold text-gray-900">Upload Bukti Rapat</h5>
       </div>
       <div class="px-5 py-5 space-y-4">
         <div id="uploadAlert" class="hidden rounded-lg px-4 py-3 mb-4"></div>
@@ -163,6 +170,9 @@
         document.getElementById("fRuang").textContent = ruang;
         document.getElementById("fJudul").textContent = judul;
         document.getElementById("fBidang").textContent = bidang;
+
+        document.getElementById("formTitle").textContent = `Upload Bukti Rapat ${judul}`;
+        document.title = `Upload Bukti Rapat ${judul}`;
 
         alertEl.classList.add("hidden");
         document.getElementById("rapatCard").classList.remove("hidden");
