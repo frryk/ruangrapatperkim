@@ -12,10 +12,10 @@ const tbody = $("#tbody");
 const countInfo = $("#countInfo");
 const pager = $("#pagination");
 
-// 👉 SET nomor WA admin (format internasional tanpa “+”)
+//  SET nomor WA admin (format internasional tanpa “+”)
 const ADMIN_WHATSAPP = "6282385752398"; // ganti nomor admin
 
-// 👉 Konfigurasi Telegram Bot
+//  Konfigurasi Telegram Bot
 const TELEGRAM_BOT_TOKEN = "8474317488:AAHDMpznNa4eFjiNmSEC1oM1oYjQB7GnZq4"; // dari @BotFather
 const TELEGRAM_CHAT_ID = "634857836";    // Chat ID pribadi admin (tanpa minus = personal chat)
 
@@ -266,13 +266,13 @@ bookingForm?.addEventListener("submit", async (e) => {
     try {
       const pesanTelegram =
         `🗓 <b>Booking Baru Masuk!</b>\n` +
-        `──────────────────────\n` +
-        `📌 <b>Bidang:</b> ${bidang}\n` +
-        `📝 <b>Judul Rapat:</b> ${judul}\n` +
-        `🏢 <b>Ruang:</b> ${ruang}\n` +
-        `📅 <b>Tanggal:</b> ${formatTanggalID(tanggal)}\n` +
-        `⏰ <b>Jam:</b> ${formatJam(jamMulai, jamSelesai)}\n` +
-        `──────────────────────\n` +
+        `─────────────────\n` +
+        `<b>Bidang:</b> ${bidang}\n` +
+        `<b>Judul Rapat:</b> ${judul}\n` +
+        `<b>Ruang:</b> ${ruang}\n` +
+        `<b>Tanggal:</b> ${formatTanggalID(tanggal)}\n` +
+        `<b>Jam:</b> ${formatJam(jamMulai, jamSelesai)}\n` +
+        `─────────────────\n` +
         `<i>Balas pesan ini untuk menyetujui booking.</i>`;
 
       const res = await fetch(

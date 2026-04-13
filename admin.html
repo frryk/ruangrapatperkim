@@ -28,7 +28,9 @@
   <nav class="bg-gray-900 text-white">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
       <a href="index.html" class="flex items-center gap-3">
-        <img src="img/batam-logo.png" class="h-10" alt="Lambang Kota Batam" />
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Lambang_Kota_Batam.png/500px-Lambang_Kota_Batam.png"
+          class="h-10" alt="Lambang Kota Batam" />
         <div class="leading-tight">
           <strong class="block">Dinas Perumahan, Kawasan Permukiman dan Pertamanan Kota Batam</strong>
           <small class="opacity-80">Aplikasi Booking Ruang Rapat — Admin</small>
@@ -206,11 +208,14 @@
   <div id="previewModal" class="hidden fixed inset-0 z-50">
     <div class="absolute inset-0 bg-black/60" id="previewBackdrop" aria-hidden="true"></div>
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-      <div class="relative bg-white rounded-xl shadow-xl overflow-hidden sm:max-w-4xl sm:w-full max-h-[90vh] flex flex-col">
+      <div
+        class="relative bg-white rounded-xl shadow-xl overflow-hidden sm:max-w-4xl sm:w-full max-h-[90vh] flex flex-col">
         <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
           <h5 class="font-semibold text-gray-800" id="previewTitle">Preview Bukti</h5>
-          <button type="button" class="rounded-lg p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition" id="btnClosePreview" aria-label="Tutup">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <button type="button" class="rounded-lg p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition"
+            id="btnClosePreview" aria-label="Tutup">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -250,13 +255,13 @@
       const previewContainer = document.getElementById('previewContainer');
       const previewTitle = document.getElementById('previewTitle');
 
-      window.openPreviewModal = function(urlData, filename, isPdf) {
+      window.openPreviewModal = function (urlData, filename, isPdf) {
         previewModal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
         previewTitle.textContent = filename || "Preview Bukti";
-        
+
         let urls = Array.isArray(urlData) ? urlData : [urlData];
-        
+
         if (isPdf) {
           previewContainer.innerHTML = `<iframe src="${urls[0]}" class="w-full h-[70vh] border-0" title="PDF Preview"></iframe>`;
         } else {
@@ -264,8 +269,8 @@
           urls.forEach((u, idx) => {
             html += `
               <div class="relative w-full flex flex-col items-center">
-                <span class="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md">Foto ${idx+1}</span>
-                <img src="${u}" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow border border-gray-200" alt="Foto ${idx+1}" loading="lazy" />
+                <span class="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md">Foto ${idx + 1}</span>
+                <img src="${u}" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow border border-gray-200" alt="Foto ${idx + 1}" loading="lazy" />
               </div>
             `;
           });
@@ -274,7 +279,7 @@
         }
       };
 
-      window.closePreviewModal = function() {
+      window.closePreviewModal = function () {
         previewModal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
         previewContainer.innerHTML = '<p class="text-gray-500">Memuat preview...</p>';
